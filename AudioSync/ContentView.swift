@@ -1,24 +1,39 @@
-//
-//  ContentView.swift
-//  AudioSync
-//
-//  Created by Antimo Bucciero on 30/03/2026.
-//
-
 import SwiftUI
 
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+    @State private var multipeer = MultipeerManager()
+    @State private var audio = AudioSyncManager()
+    @State private var role: AppRole? = nil
 
-#Preview {
-    ContentView()
+    enum AppRole { case host, client }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AppBackground()
+
+                if let role = role {
+                    if role == .host {
+                        HostView(multipeer: multipeer, audio: audio) {
+                            self.role = nil
+                        }
+                        .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
+                    } else {
+                        ClientView(multipeer: multipeer, audio: audio) {
+                            self.role = nil
+                        }
+                        .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
+                    }
+                } else {
+                    RoleSelectionView { selected in
+                        withAnimation(.spring(response: 0.4)) {
+                            role = selected
+                        }
+                    }
+                    .transition(.opacity)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
 }
